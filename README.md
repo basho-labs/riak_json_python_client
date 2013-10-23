@@ -1,5 +1,10 @@
 # Riak JSON Python Client
 
+## Requiremnts
+
++ Python 2.7
++ requests
+
 ## Installation
 
     git clone http://github.com/basho/riak_json_python_client
@@ -77,7 +82,7 @@
 
         ## {u'City': u'Ancient', u'name': u'Json Argo', u'Age': 23, u'State': u'Greece', u'Address': u'123 Fake Street', u'_id': u'TgFKK4uUZKSpyXkMGGQUMhcZ8TQ'}
 
-### Range Search
+#### Range Search
 
     ## Age >= 21 and Age <= 25
     query = {'$and': [{'Age': {'$gte': 21}}, {'Age': {'$lte': 25}}]}
