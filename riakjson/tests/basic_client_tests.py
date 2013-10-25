@@ -20,7 +20,6 @@ class BasicClientTests(unittest.TestCase):
         self.test_collection = self.client[TEST_COLLECTION]
 
     def test_insert(self):
-
         data = {'name': 'Keymore Dan'}
         nonrandom_key = self.test_collection.insert(data, 'key')
         self.assertEquals(nonrandom_key, 'key')

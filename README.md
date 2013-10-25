@@ -40,6 +40,16 @@
 
     ## '/TgFKK4uUZKSpyXkMGGQUMhcZ8TQ'
 
+    ## Insert record with predefined key
+    customer2 = {'name': 'Dan Gerr',
+                 'Address': '1000 Hoover Drive',
+                 'City': 'Ferrytown',
+                 'State': 'WV',
+                 'Age': 33}
+    customer2_key = 'cust_key_12345'
+    customers.insert(customer2, customer2_key)
+    ## 'cust_key_12345'
+
     purchase = {'id': 'Golden_Fleece_5',
                 'customer_id': customer_key}
 
@@ -90,4 +100,20 @@
     # create a list from the generator
     list(customers.find(query).objects())
     [{u'City': u'Ancient', u'name': u'Json Argo', u'Age': 23, u'State': u'Greece', u'Address': u'123 Fake Street', u'_id': u'TgFKK4uUZKSpyXkMGGQUMhcZ8TQ'}]
+
+#### Use Query object and helper methods to construct queries
+
+    from riakjson.query import Query
+    from riakjson.query import ASCENDING, regex, gt
+
+    ## State = W.* AND Age greater than 30
+    query = Query(and_args(regex('State', 'W.*'), gt('Age', 30)))
+                .limit(1)
+                .order(ASCENDING)
+
+    result = customers.find(query.build())
+
+
+
+
 
