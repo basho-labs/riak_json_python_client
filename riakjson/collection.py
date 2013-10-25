@@ -1,8 +1,7 @@
 __author__ = 'dankerrigan'
 
 import json
-from query import Query
-from result_iter import result_iter
+from result import Result
 
 COLLECTION_RESOURCE = 'collection'
 DEFAULT_HEADERS = {'content-type': 'application/json', 'accept': 'application/json'}
@@ -83,7 +82,7 @@ class Collection(object):
         else:
             raise Exception("Error querying for single result, {0}/query/one, error, {1}".format(self.name, code))
 
-    def find(self, query, result_limit=None, raw_result=False):
+    def find(self, query):
         resource = '{base}/{collection}/query/all'.format(base=COLLECTION_RESOURCE, collection=self.name)
 
         code, headers, data = self.connection.put(resource, json.dumps(query), DEFAULT_HEADERS)
@@ -91,12 +90,9 @@ class Collection(object):
         if code == 200:
             data_resp = json.loads(data)
             if data_resp == []:
-                return {}
+                return None
             else:
-                if not raw_result:
-                    return result_iter(self.find, Query(query), data_resp, result_limit=result_limit)
-                else:
-                    return data_resp
+                return Result(self, query, data_resp)
         elif code == 404:
             return {}
         else:

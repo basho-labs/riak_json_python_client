@@ -1,9 +1,7 @@
 __author__ = 'dankerrigan'
 
-import json
 
-
-def result_iter(query_fun, query, result, result_limit=None):
+def object_iter(query_fun, query, result, result_limit=None):
     try:
         num_pages = result['num_pages']
 

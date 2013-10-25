@@ -43,15 +43,14 @@ class FindTests(unittest.TestCase):
 
         q = query.Query(query.eq('name', 'notfound'))
 
-        results = self.test_collection.find(q.build())
+        result = self.test_collection.find(q.build())
 
         try:
-            records = results['data']
 
-            self.assertEqual(len(records), 0, 'Should be 0, actually {0}'.format(len(records)))
+            self.assertEqual(len(result.raw_data), 0, 'Should be 0, actually {0}'.format(len(result.raw_data)))
 
         except KeyError as e:
-            self.fail("Unexpected result, {0}, {1}".format(e, results))
+            self.fail("Unexpected result, {0}, {1}".format(e, result))
 
     def test_find_one(self):
         print "Test find one"
@@ -73,58 +72,50 @@ class FindTests(unittest.TestCase):
         print "Test find (wildcard)"
         q = query.Query(query.eq('name', 'Dan'))
 
-        results = self.test_collection.find(q.build(), raw_result=True)
+        result = self.test_collection.find(q.build())
 
         try:
-            records = results['data']
-
-            self.assertEqual(len(records), 1, 'Should be 1, actually {0}'.format(len(records)))
+            self.assertEqual(len(result.raw_data), 1, 'Should be 1, actually {0}'.format(len(result.raw_data)))
 
         except KeyError as e:
-            self.fail("Unexpected result, {0}, {1}".format(e, results))
+            self.fail("Unexpected result, {0}, {1}".format(e, result))
 
     def test_and(self):
         print "Test and with 2 terms"
         q = query.Query(query.and_args(query.eq('name', 'Drew'), query.eq('age', 1)))
 
-        results = self.test_collection.find(q.build(), raw_result=True)
+        result = self.test_collection.find(q.build())
 
         try:
-            records = results['data']
-
-            self.assertEqual(len(records), 1, 'Should be 1, actually {0}'.format(len(records)))
+            self.assertEqual(len(result.raw_data), 1, 'Should be 1, actually {0}'.format(len(result.raw_data)))
 
         except KeyError as e:
-            self.fail("Unexpected result, {0}, {1}".format(e, results))
+            self.fail("Unexpected result, {0}, {1}".format(e, result))
 
     def test_or(self):
         print "Test or with 2 terms"
         q = query.Query(query.or_args(query.eq('age', 1), query.eq('age', 2)))
 
-        results = self.test_collection.find(q.build(), raw_result=True)
+        result = self.test_collection.find(q.build())
 
         try:
-            records = results['data']
-
-            self.assertEqual(len(records), 2, 'Should be 2, actually {0}'.format(len(records)))
+            self.assertEqual(len(result.raw_data), 2, 'Should be 2, actually {0}'.format(len(result.raw_data)))
 
         except KeyError as e:
-            self.fail("Unexpected result, {0}, {1}".format(e, results))
+            self.fail("Unexpected result, {0}, {1}".format(e, result))
 
     def test_find_range(self):
         print "Test find range"
 
         q = query.Query(query.between('age', 1, 2))
 
-        results = self.test_collection.find(q.build())
+        result = self.test_collection.find(q.build())
 
         try:
-            records = results['data']
-
-            self.assertEqual(len(records), 2, 'Should be 2, actually {0}'.format(len(records)))
+            self.assertEqual(len(result.raw_data), 2, 'Should be 2, actually {0}'.format(len(result.raw_data)))
 
         except KeyError as e:
-            self.fail("Unexpected result, {0}, {1}".format(e, results))
+            self.fail("Unexpected result, {0}, {1}".format(e, result))
 
     def test_sort(self):
         print "Test sorting"
@@ -132,17 +123,16 @@ class FindTests(unittest.TestCase):
         q = query.Query(query.regex('name', '*'))
         q.order({'name': query.ASCENDING})
 
-        results = self.test_collection.find(q.build(), raw_result=True)
+        result = self.test_collection.find(q.build())
 
         try:
-            records = results['data']
-            ordered = [record['name'] for record in records]
+            ordered = [record['name'] for record in result.raw_data]
 
             self.assertEqual(ordered, sorted([record['name'] for record in self.data]),
                              "Result set not ordered, [{0}]".format(', '.join(ordered)))
 
         except KeyError as e:
-            self.fail("Unexpected results, {0}, {1}".format(e, results))
+            self.fail("Unexpected results, {0}, {1}".format(e, result))
 
     def test_paging(self):
         print "Test paging"
@@ -157,10 +147,10 @@ class FindTests(unittest.TestCase):
         try:
             for i, record in enumerate(expected):
                 q.offset(i+1)
-                result = self.test_collection.find(q.build(), raw_result=True)['data']
-                self.assertEqual(len(result), 1, "Only expected 1 result")
+                result = self.test_collection.find(q.build())
+                self.assertEqual(len(result.raw_data), 1, "Only expected 1 result")
 
-                actual.append(result[0]['name'])
+                actual.append(result.raw_data[0]['name'])
 
         except KeyError as e:
             self.fail("Unexpected results, {0}".format(e))
@@ -173,16 +163,37 @@ class FindTests(unittest.TestCase):
         q = query.Query(query.regex('name', '*'))
         q.limit(1)
 
-        expected_count = len(self.data) - 1
+        expected_count = len(self.data)
 
-        result_iter = self.test_collection.find(q.build(), result_limit=expected_count)
+        result = self.test_collection.find(q.build())
 
         count = 0
-        for i, doc in enumerate(result_iter):
+        for i, doc in enumerate(result.objects()):
             count += 1
             self.assertIsNotNone(doc)
 
         self.assertEqual(count, expected_count, "Expected {0} iterations, got {1}".format(expected_count, count))
+
+    def test_stats(self):
+        print "Test stats generation"
+
+        q = query.Query(query.regex('name', '*'))
+        q.enable_stats('age')
+
+        expected_sum = sum([item['age'] for item in self.data])
+
+        import json
+        print json.dumps(q.build())
+
+        result = self.test_collection.find(q.build())
+
+        self.assertTrue('age' in result.stats)
+
+        self.assertEqual(result.stats['age'].sum, expected_sum, "Expected sum {0} but got {1}".format(expected_sum, result.stats['age'].sum))
+
+
+
+
 
     def test_find_geo(self):
         pass

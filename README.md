@@ -67,7 +67,7 @@
 
     ## {u'City': u'Ancient', u'name': u'Json Argo', u'Age': 23, u'State': u'Greece', u'Address': u'123 Fake Street', u'_id': u'TgFKK4uUZKSpyXkMGGQUMhcZ8TQ'}
 
-#### Find all users whose name stats with Json
+#### Find all users whose name starts with Json
 
     ## find all users whose name begins with Json, field names are case sensitive
     query = {'name': 'Json*'}

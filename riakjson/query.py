@@ -47,7 +47,7 @@ def nin(field, array_value):
 
 
 def regex(field, regex_value):
-    return {field: {"$regex": regex_value}}
+    return {field: {"$regex": "/" + regex_value + "/"}}
 
 
 class Query(object):
@@ -55,7 +55,8 @@ class Query(object):
         self._order = None
         self._limit = None
         self._offset = None
-        for key in ['$sort', '$per_page', '$page']:
+        self._stats = list()
+        for key in ['$sort', '$per_page', '$page', '$stats']:
             if key in query:
                 if key == '$sort':
                     self.order(query[key])
@@ -63,6 +64,8 @@ class Query(object):
                     self.limit(query[key])
                 elif key == '$page':
                     self.offset(query[key])
+                elif key == '$stats':
+                    self._stats.extend(query[key])
 
                 query.pop(key)
 
@@ -76,6 +79,8 @@ class Query(object):
             query['$per_page'] = self._limit
         if self._offset:
             query['$page'] = self._offset
+        if len(self._stats) > 0:
+            query['$stats'] = self._stats
 
         return query
 
@@ -86,7 +91,7 @@ class Query(object):
         for key, value in query.items():
             if key in self._query:
                 if key == '$and' or key == '$or':
-                    self._query[key].append(value)
+                    self._query[key].extend(value)
                 else:
                     self._query[key] = value
             else:
@@ -108,3 +113,6 @@ class Query(object):
         self._offset = value
 
         return self
+
+    def enable_stats(self, field):
+        self._stats.append(field)
