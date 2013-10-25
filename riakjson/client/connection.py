@@ -34,10 +34,10 @@ class Connection(object):
 
         resp = requests.put(uri, data=data, headers=headers)
 
-        print 'Resource:', resource
-        print 'Data:', data
-        print 'Code:', resp.status_code
-        print 'Response:', resp.text
+        #print 'Resource:', resource
+        #print 'Data:', data
+        #print 'Code:', resp.status_code
+        #print 'Response:', resp.text
 
         return resp.status_code, resp.headers, resp.text
 
