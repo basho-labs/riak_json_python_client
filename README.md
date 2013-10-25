@@ -17,7 +17,7 @@
 
     from riakjson.client import Client
 
-    client = Client(host='127.0.0.1', port=8000)
+    client = Client(Connection(host='127.0.0.1', port=8000))
 
 ### Create or Use an existing collection
 
@@ -74,10 +74,10 @@
 
     result = customers.find(query)
 
-    ## <generator object result_iter at 0x10530acd0>
+    ## <riakjson.result.Result object at 0x10e884910>
 
     # iterate results
-    for item in result:
+    for item in result.objects():
         print item
 
         ## {u'City': u'Ancient', u'name': u'Json Argo', u'Age': 23, u'State': u'Greece', u'Address': u'123 Fake Street', u'_id': u'TgFKK4uUZKSpyXkMGGQUMhcZ8TQ'}
@@ -88,6 +88,6 @@
     query = {'$and': [{'Age': {'$gte': 21}}, {'Age': {'$lte': 25}}]}
 
     # create a list from the generator
-    list(customers.find(query))
+    list(customers.find(query).objects())
     [{u'City': u'Ancient', u'name': u'Json Argo', u'Age': 23, u'State': u'Greece', u'Address': u'123 Fake Street', u'_id': u'TgFKK4uUZKSpyXkMGGQUMhcZ8TQ'}]
 
