@@ -11,12 +11,8 @@ class Result(object):
         self.per_page = response_doc.get('per_page', 0)
         self.num_pages = response_doc.get('num_pages', 0)
         self.raw_data = response_doc.get('data', [])
-
-        #self.stats = dict()
-        #_stats = response_doc.get('stats', {})
-        #print _stats
-        #for field, value in _stats.items():
-        #    self.stats[field] = Stats(value)
+        self.stats = Stats(response_doc.get('stats', dict()))
+        self.facets = response_doc.get('facets', dict())
 
     def objects(self, result_limit=None):
         _query = Query(query=self.query)
@@ -45,6 +41,13 @@ class Result(object):
 
 
 class Stats(object):
+    def __init__(self, stats_doc):
+        self.fields = dict()
+        for field, doc in stats_doc.get('stats_fields', dict()).items():
+            self.fields[field] = StatsField(doc)
+
+
+class StatsField(object):
     def __init__(self, stats_doc):
         self.min = stats_doc.get('min', None)
         self.max = stats_doc.get('max', None)

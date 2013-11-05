@@ -59,7 +59,6 @@ class FindTests(unittest.TestCase):
 
         results = self.test_collection.find_one(q.build())
 
-        print "Results", results
         try:
             self.assertEqual(results['name'], 'Dan',
                              'name field in retrieved record did not match, {0}, actually, {1}'.format('Dan',
@@ -69,13 +68,26 @@ class FindTests(unittest.TestCase):
             self.fail("Unexpected result, {0}, {1}".format(e, results))
 
     def test_find(self):
-        print "Test find (wildcard)"
+        print "Test find (exact match)"
         q = query.Query(query.eq('name', 'Dan'))
 
         result = self.test_collection.find(q.build())
 
         try:
             self.assertEqual(len(result.raw_data), 1, 'Should be 1, actually {0}'.format(len(result.raw_data)))
+
+        except KeyError as e:
+            self.fail("Unexpected result, {0}, {1}".format(e, result))
+
+    def test_find_limit_0(self):
+        print "Test find (limit 0)"
+        q = query.Query(query.eq('name', 'Dan'))
+        q.limit(0)
+
+        result = self.test_collection.find(q.build())
+
+        try:
+            self.assertEqual(len(result.raw_data), 0, 'Should be 0, actually {0}'.format(len(result.raw_data)))
 
         except KeyError as e:
             self.fail("Unexpected result, {0}, {1}".format(e, result))
@@ -120,7 +132,7 @@ class FindTests(unittest.TestCase):
     def test_sort(self):
         print "Test sorting"
 
-        q = query.Query(query.regex('name', '*'))
+        q = query.Query(query.regex('name', '.*'))
         q.order({'name': query.ASCENDING})
 
         result = self.test_collection.find(q.build())
@@ -137,7 +149,7 @@ class FindTests(unittest.TestCase):
     def test_paging(self):
         print "Test paging"
 
-        q = query.Query(query.regex('name', '*'))
+        q = query.Query(query.regex('name', '.*'))
         q.order({'name': query.ASCENDING})
         q.limit(1)
 
@@ -148,7 +160,7 @@ class FindTests(unittest.TestCase):
             for i, record in enumerate(expected):
                 q.offset(i+1)
                 result = self.test_collection.find(q.build())
-                self.assertEqual(len(result.raw_data), 1, "Only expected 1 result")
+                self.assertEqual(len(result.raw_data), 1, "Only expected 1 result {0}".format(result.raw_data))
 
                 actual.append(result.raw_data[0]['name'])
 
@@ -160,40 +172,44 @@ class FindTests(unittest.TestCase):
     def test_result_iter(self):
         print "Test iteration on paged result set"
 
-        q = query.Query(query.regex('name', '*'))
+        q = query.Query(query.regex('name', '.*'))
         q.limit(1)
 
         expected_count = len(self.data)
 
         result = self.test_collection.find(q.build())
 
-        count = 0
-        for i, doc in enumerate(result.objects()):
-            count += 1
-            self.assertIsNotNone(doc)
+        count = len(list(result.objects()))
 
         self.assertEqual(count, expected_count, "Expected {0} iterations, got {1}".format(expected_count, count))
 
     def test_stats(self):
         print "Test stats generation"
 
-        q = query.Query(query.regex('name', '*'))
-        q.enable_stats('age')
+        q = query.Query(query.regex('name', '.*'))
+        q.stats_for('age')
+        q.limit(0)
 
         expected_sum = sum([item['age'] for item in self.data])
 
-        import json
-        print json.dumps(q.build())
+        result = self.test_collection.find(q.build())
+
+        self.assertTrue('age' in result.stats.fields)
+
+        self.assertEqual(result.stats.fields['age'].sum, expected_sum,
+                         "Expected sum {0} but got {1}".format(expected_sum, result.stats.fields['age'].sum))
+
+    def test_facets(self):
+        print "Test facets generation"
+
+        q = query.Query(query.regex('name', '.*'))
+        q.limit(0)
+        q.stats_for('age')
+        q.facet_on('age')
 
         result = self.test_collection.find(q.build())
 
-        self.assertTrue('age' in result.stats)
-
-        self.assertEqual(result.stats['age'].sum, expected_sum, "Expected sum {0} but got {1}".format(expected_sum, result.stats['age'].sum))
-
-
-
-
+        self.assertTrue(len(result.facets) > 0)
 
     def test_find_geo(self):
         pass

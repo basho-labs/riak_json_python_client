@@ -4,40 +4,47 @@ import requests
 
 
 class Connection(object):
-    def __init__(self, protocol='http', host='127.0.0.1', port=8000):
+    def __init__(self, protocol='http', host='127.0.0.1', port=8098, root='rj/'):
         self.protocol = protocol
         self.host = host
         self.port = port
+        self.root = root
 
     def _format_uri(self, resource):
-        return '{protocol}://{host}:{port}/{resource}'.format(protocol=self.protocol,
+        return '{protocol}://{host}:{port}/{root}{resource}'.format(protocol=self.protocol,
                                                               host=self.host,
                                                               port=self.port,
+                                                              root=self.root,
                                                               resource=resource)
 
     def get(self, resource, headers):
         uri = self._format_uri(resource)
 
-        resp = requests.get(uri, headers=headers)
+        resp = requests.get(uri, headers=headers, timeout=30)
 
         return resp.status_code, resp.headers, resp.text
 
     def post(self, resource, data, headers):
         uri = self._format_uri(resource)
 
-        resp = requests.post(uri, data=data, headers=headers)
+        resp = requests.post(uri, data=data, headers=headers, timeout=30)
+
+        #print 'Resource:', resource
+        #print 'Data:', data
+        #print 'Code:', resp.status_code
+        #print 'Response:', resp.text
 
         return resp.status_code, resp.headers, resp.text
 
     def put(self, resource, data, headers):
         uri = self._format_uri(resource)
 
-        resp = requests.put(uri, data=data, headers=headers)
+        resp = requests.put(uri, data=data, headers=headers, timeout=30)
 
-        #print 'Resource:', resource
-        #print 'Data:', data
-        #print 'Code:', resp.status_code
-        #print 'Response:', resp.text
+        print 'Resource:', resource
+        print 'Data:', data
+        print 'Code:', resp.status_code
+        print 'Response:', resp.text
 
         return resp.status_code, resp.headers, resp.text
 
