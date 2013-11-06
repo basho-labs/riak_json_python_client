@@ -4,7 +4,7 @@ import requests
 
 
 class Connection(object):
-    def __init__(self, protocol='http', host='127.0.0.1', port=8098, root='rj/'):
+    def __init__(self, protocol='http', host='127.0.0.1', port=8098, root='document/'):
         self.protocol = protocol
         self.host = host
         self.port = port

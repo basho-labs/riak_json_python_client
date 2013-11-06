@@ -187,7 +187,7 @@ class FindTests(unittest.TestCase):
         print "Test stats generation"
 
         q = query.Query(query.regex('name', '.*'))
-        q.stats_for('age')
+        q.stats_on('age')
         q.limit(0)
 
         expected_sum = sum([item['age'] for item in self.data])
@@ -199,12 +199,26 @@ class FindTests(unittest.TestCase):
         self.assertEqual(result.stats.fields['age'].sum, expected_sum,
                          "Expected sum {0} but got {1}".format(expected_sum, result.stats.fields['age'].sum))
 
+    def test_stats_with_facet(self):
+        print "Test stats generation"
+
+        q = query.Query(query.regex('name', '.*'))
+        q.stats_on('age')
+        q.stats_args({'facet': 'name'})
+        q.limit(0)
+
+        result = self.test_collection.find(q.build())
+
+        self.assertTrue('age' in result.stats.fields)
+        self.assertTrue('name' in result.stats.fields['age'].facets)
+
+
     def test_facets(self):
         print "Test facets generation"
 
         q = query.Query(query.regex('name', '.*'))
         q.limit(0)
-        q.stats_for('age')
+        q.stats_on('age')
         q.facet_on('age')
 
         result = self.test_collection.find(q.build())

@@ -56,7 +56,9 @@ class Query(object):
         self._limit = None
         self._offset = None
         self._stats = list()
+        self._stats_args = dict()
         self._facets = list()
+        self._facets_args = dict()
         for key in ['$sort', '$per_page', '$page', '$stats', '$facets']:
             if key in query:
                 if key == '$sort':
@@ -84,8 +86,14 @@ class Query(object):
             query['$page'] = self._offset
         if len(self._stats) > 0:
             query['$stats'] = self._stats
+        if len(self._stats_args) > 0:
+            for key, value in self._stats_args.items():
+                query['$stats.' + key] = value
         if len(self._facets) > 0:
             query['$facets'] = self._facets
+        if len(self._facets_args) > 0:
+            for key, value in self._facets_args.items():
+                query['$facets.' + key] = value
 
         return query
 
@@ -119,9 +127,15 @@ class Query(object):
 
         return self
 
-    def stats_for(self, field):
+    def stats_on(self, field):
         self._stats.append(field)
+
+    def stats_args(self, args_dict):
+        self._stats_args = args_dict
 
     def facet_on(self, field):
         self._facets.append(field)
+
+    def facet_args(self, args_dict):
+        self._facets_args = args_dict
 

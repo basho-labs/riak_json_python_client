@@ -44,7 +44,8 @@ class Stats(object):
     def __init__(self, stats_doc):
         self.fields = dict()
         for field, doc in stats_doc.get('stats_fields', dict()).items():
-            self.fields[field] = StatsField(doc)
+            if doc:
+                self.fields[field] = StatsField(doc)
 
 
 class StatsField(object):
@@ -56,4 +57,9 @@ class StatsField(object):
         self.sum = stats_doc.get('sum', None)
         self.sum_of_squares = stats_doc.get('sumOfSquares', None)
         self.mean = stats_doc.get('mean', None)
-        self.facets = stats_doc.get('facets', {})
+        self.facets = dict()
+        _facets = stats_doc.get('facets', {})
+        for field, stats in _facets.items():
+            self.facets[field] = dict()
+            for value, stat in stats.items():
+                self.facets[field][value] = StatsField(stat)
