@@ -4,6 +4,8 @@ import json
 from result import Result
 
 COLLECTION_RESOURCE = 'collection'
+YZ_RESOURCE = 'yz/'
+INTERNAL_INDEX_SUFFIX = 'RJIndex'
 DEFAULT_HEADERS = {'content-type': 'application/json', 'accept': 'application/json'}
 
 
@@ -100,6 +102,51 @@ class Collection(object):
                                                                                                json.dumps(query),
                                                                                                code,
                                                                                                data))
+
+    def set_schema(self, schema_doc, schema_name):
+        resource = '{base}/{collection}/schema/{schema_name}'.format(base=COLLECTION_RESOURCE,
+                                                                     collection=self.name,
+                                                                     schema_name=schema_name)
+
+        code, headers, data = self.connection.put(resource, json.dumps(schema_doc), DEFAULT_HEADERS)
+
+        if code == 204:
+            return True
+        else:
+            raise Exception("Error setting schema for {1}, {0}, error {2}\n{3}".format(self.name,
+                                                                                       json.dumps(schema_doc),
+                                                                                       code,
+                                                                                       data))
+
+    def get_schema(self, schema_name):
+        resource = '{base}/{collection}/schema/{schema_name}'.format(base=COLLECTION_RESOURCE,
+                                                                     collection=self.name,
+                                                                     schema_name=schema_name)
+
+        code, headers, data = self.connection.get(resource, DEFAULT_HEADERS)
+
+        if code == 200:
+            return json.loads(data)
+        elif code == 404:
+            return [{}]
+        else:
+            raise Exception("Unexpected response retrieving schema for {0}, error {1}\n{2}".format(self.name,
+                                                                                                   code,
+                                                                                                   data))
+
+    def delete_schema(self):
+        resource = '{yz_base}index/{collection}{internal_suffix}'.format(yz_base=YZ_RESOURCE,
+                                                                         collection=self.name,
+                                                                         internal_suffix=INTERNAL_INDEX_SUFFIX)
+
+        code, headers, data = self.connection.delete(resource, root='')
+
+        if code == 204:
+            return True
+        else:
+            raise Exception("Unexpected response deleting existing schema {0}, error {1}\n{2}".format(self.name,
+                                                                                                      code,
+                                                                                                      data))
 
     def count(self, query):
         pass
