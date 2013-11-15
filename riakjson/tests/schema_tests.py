@@ -15,11 +15,6 @@ TEST_SCHEMA_NAME = 'test_schema'
 
 class SchemaTests(unittest.TestCase):
 
-    #default_schema = [{"name": "first_name", "type": "string"},
-    #                  {"name": "last_name", "type": "string"},
-    #                  {"name": "description", "type": "multi_string"},
-    #                  {"name": "age", "type": "number"},
-    #                  {"name": "location", "type": "geo"}]
     default_schema = Schema().string('first_name')\
                              .string('last_name')\
                              .multi_string('description')\

@@ -4,7 +4,8 @@ import platform
 import time
 
 from riakjson.client import Client
-import riakjson.query as query
+from riakjson.query import Query, GroupSpec
+from riakjson.query import eq, between, and_args, or_args, regex, ASCENDING
 
 
 if platform.python_version() < '2.7':
@@ -41,7 +42,7 @@ class FindTests(unittest.TestCase):
     def test_no_match(self):
         print "Test no match"
 
-        q = query.Query(query.eq('name', 'notfound'))
+        q = Query(eq('name', 'notfound'))
 
         result = self.test_collection.find(q.build())
 
@@ -55,7 +56,7 @@ class FindTests(unittest.TestCase):
     def test_find_one(self):
         print "Test find one"
 
-        q = query.Query(query.eq('name', 'Dan'))
+        q = Query(eq('name', 'Dan'))
 
         results = self.test_collection.find_one(q.build())
 
@@ -69,7 +70,7 @@ class FindTests(unittest.TestCase):
 
     def test_find(self):
         print "Test find (exact match)"
-        q = query.Query(query.eq('name', 'Dan'))
+        q = Query(eq('name', 'Dan'))
 
         result = self.test_collection.find(q.build())
 
@@ -81,7 +82,7 @@ class FindTests(unittest.TestCase):
 
     def test_find_limit_0(self):
         print "Test find (limit 0)"
-        q = query.Query(query.eq('name', 'Dan'))
+        q = Query(eq('name', 'Dan'))
         q.limit(0)
 
         result = self.test_collection.find(q.build())
@@ -94,7 +95,7 @@ class FindTests(unittest.TestCase):
 
     def test_and(self):
         print "Test and with 2 terms"
-        q = query.Query(query.and_args(query.eq('name', 'Drew'), query.eq('age', 1)))
+        q = Query(and_args(eq('name', 'Drew'), eq('age', 1)))
 
         result = self.test_collection.find(q.build())
 
@@ -106,7 +107,7 @@ class FindTests(unittest.TestCase):
 
     def test_or(self):
         print "Test or with 2 terms"
-        q = query.Query(query.or_args(query.eq('age', 1), query.eq('age', 2)))
+        q = Query(or_args(eq('age', 1), eq('age', 2)))
 
         result = self.test_collection.find(q.build())
 
@@ -119,7 +120,7 @@ class FindTests(unittest.TestCase):
     def test_find_range(self):
         print "Test find range"
 
-        q = query.Query(query.between('age', 1, 2))
+        q = Query(between('age', 1, 2))
 
         result = self.test_collection.find(q.build())
 
@@ -132,8 +133,8 @@ class FindTests(unittest.TestCase):
     def test_sort(self):
         print "Test sorting"
 
-        q = query.Query(query.regex('name', '.*'))
-        q.order({'name': query.ASCENDING})
+        q = Query(regex('name', '.*'))
+        q.order({'name': ASCENDING})
 
         result = self.test_collection.find(q.build())
 
@@ -149,8 +150,8 @@ class FindTests(unittest.TestCase):
     def test_paging(self):
         print "Test paging"
 
-        q = query.Query(query.regex('name', '.*'))
-        q.order({'name': query.ASCENDING})
+        q = Query(regex('name', '.*'))
+        q.order({'name': ASCENDING})
         q.limit(1)
 
         expected = sorted([record['name'] for record in self.data])
@@ -172,7 +173,7 @@ class FindTests(unittest.TestCase):
     def test_result_iter(self):
         print "Test iteration on paged result set"
 
-        q = query.Query(query.regex('name', '.*'))
+        q = Query(regex('name', '.*'))
         q.limit(1)
 
         expected_count = len(self.data)
@@ -183,47 +184,74 @@ class FindTests(unittest.TestCase):
 
         self.assertEqual(count, expected_count, "Expected {0} iterations, got {1}".format(expected_count, count))
 
-    def test_stats(self):
-        print "Test stats generation"
+    def test_grouping_by_field(self):
+        print 'Test grouping by field'
 
-        q = query.Query(query.regex('name', '.*'))
-        q.stats_on('age')
-        q.limit(0)
-
-        expected_sum = sum([item['age'] for item in self.data])
+        q = Query(regex('name', '.*'))
+        q.add_grouping(GroupSpec(field='name'))
 
         result = self.test_collection.find(q.build())
 
-        self.assertTrue('age' in result.stats.fields)
+        self.assertTrue(len(result.groups) > 0)
 
-        self.assertEqual(result.stats.fields['age'].sum, expected_sum,
-                         "Expected sum {0} but got {1}".format(expected_sum, result.stats.fields['age'].sum))
+    def test_grouping_by_query(self):
+        print 'Test grouping by query'
 
-    def test_stats_with_facet(self):
-        print "Test stats generation"
+        q = Query()
+        group_spec = GroupSpec()
+        group_spec.add_group_query(or_args(eq('name', 'Dan'), eq('name', 'Drew')))
+        group_spec.add_group_query(eq('name', 'Evan'))
+        group_spec.limit = 10
 
-        q = query.Query(query.regex('name', '.*'))
-        q.stats_on('age')
-        q.stats_args({'facet': 'name'})
-        q.limit(0)
-
-        result = self.test_collection.find(q.build())
-
-        self.assertTrue('age' in result.stats.fields)
-        self.assertTrue('name' in result.stats.fields['age'].facets)
-
-
-    def test_facets(self):
-        print "Test facets generation"
-
-        q = query.Query(query.regex('name', '.*'))
-        q.limit(0)
-        q.stats_on('age')
-        q.facet_on('age')
+        q.add_grouping(group_spec)
 
         result = self.test_collection.find(q.build())
 
-        self.assertTrue(len(result.facets) > 0)
+        self.assertTrue(len(result.groups) > 0)
+
+
+
+    #def test_stats(self):
+    #    print "Test stats generation"
+    #
+    #    q = query.Query(query.regex('name', '.*'))
+    #    q.stats_on('age')
+    #    q.limit(0)
+    #
+    #    expected_sum = sum([item['age'] for item in self.data])
+    #
+    #    result = self.test_collection.find(q.build())
+    #
+    #    self.assertTrue('age' in result.stats.fields)
+    #
+    #    self.assertEqual(result.stats.fields['age'].sum, expected_sum,
+    #                     "Expected sum {0} but got {1}".format(expected_sum, result.stats.fields['age'].sum))
+    #
+    #def test_stats_with_facet(self):
+    #    print "Test stats with facet generation"
+    #
+    #    q = query.Query(query.regex('name', '.*'))
+    #    q.stats_on('age')
+    #    q.stats_args({'facet': 'name'})
+    #    q.limit(0)
+    #
+    #    result = self.test_collection.find(q.build())
+    #
+    #    self.assertTrue('age' in result.stats.fields)
+    #    self.assertTrue('name' in result.stats.fields['age'].facets)
+    #
+    #
+    #def test_facets(self):
+    #    print "Test facets generation"
+    #
+    #    q = query.Query(query.regex('name', '.*'))
+    #    q.limit(0)
+    #    q.stats_on('age')
+    #    q.facet_on('age')
+    #
+    #    result = self.test_collection.find(q.build())
+    #
+    #    self.assertTrue(len(result.facets) > 0)
 
     def test_find_geo(self):
         pass

@@ -49,12 +49,12 @@ def nin(field, array_value):
 def regex(field, regex_value):
     return {field: {"$regex": "/" + regex_value + "/"}}
 
-
 class Query(object):
     def __init__(self, query=dict()):
         self._order = None
         self._limit = None
         self._offset = None
+        self._group_specs = list()
         self._stats = list()
         self._stats_args = dict()
         self._facets = list()
@@ -84,6 +84,9 @@ class Query(object):
             query['$per_page'] = self._limit
         if self._offset:
             query['$page'] = self._offset
+
+        if len(self._group_specs) > 0:
+            query['$group'] = [group_spec.build() for group_spec in self._group_specs]
         if len(self._stats) > 0:
             query['$stats'] = self._stats
         if len(self._stats_args) > 0:
@@ -127,6 +130,9 @@ class Query(object):
 
         return self
 
+    def add_grouping(self, group_spec):
+        self._group_specs.append(group_spec)
+
     def stats_on(self, field):
         self._stats.append(field)
 
@@ -138,4 +144,49 @@ class Query(object):
 
     def facet_args(self, args_dict):
         self._facets_args = args_dict
+
+class GroupSpec(object):
+    def __init__(self, field=None, queries=list(), ranges=None, limit=0, start=1, sort=None):
+        self.field = field
+        self.queries = queries
+        self.limit = limit
+        self.start = start
+        self.sort = sort
+
+    def add_group_query(self, query):
+        self.queries.append(query)
+
+    def build(self):
+        result = OrderedDict()
+
+        if self.field:
+            result['field'] = self.field
+        if len(self.queries) > 0:
+            result['queries'] = self.queries
+        if self.limit:
+            result['limit'] = self.limit
+        if self.start:
+            result['start'] = self.start
+        if self.sort:
+            result['sort'] = self.sort
+
+        return result
+
+class RangeSpec(object):
+    def __init__(self, field, start=None, end=None, increment=None):
+        self.field = field
+        self.start = start
+        self.end = end
+        self.increment = increment
+
+    def build(self):
+        result = OrderedDict()
+        result['field'] = self.field
+        if self.start:
+            result['start'] = self.start
+        if self.end:
+            result['end'] = self.end
+        if self.increment:
+            result['increment'] = self.increment
+        return result
 

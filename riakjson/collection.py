@@ -87,7 +87,7 @@ class Collection(object):
     def find(self, query):
         resource = '{base}/{collection}/query/all'.format(base=COLLECTION_RESOURCE, collection=self.name)
 
-        code, headers, data = self.connection.put(resource, json.dumps(query), DEFAULT_HEADERS)
+        code, headers, data = self.connection.put(resource, json.dumps(query), DEFAULT_HEADERS, debug=True)
 
         if code == 200:
             data_resp = json.loads(data)

@@ -10,7 +10,8 @@ class Result(object):
         self.page = response_doc.get('page', 0)
         self.per_page = response_doc.get('per_page', 0)
         self.num_pages = response_doc.get('num_pages', 0)
-        self.raw_data = response_doc.get('data', [])
+        self.raw_data = response_doc.get('data', list())
+        self.groups = response_doc.get('groups', list())
         self.stats = Stats(response_doc.get('stats', dict()))
         self.facets = response_doc.get('facets', dict())
 
