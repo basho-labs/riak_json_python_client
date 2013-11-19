@@ -4,7 +4,7 @@ import platform
 import time
 
 from riakjson.client import Client
-from riakjson.query import Query, GroupSpec
+from riakjson.query import Query, GroupSpec, CategorizeSpec, RangeSpec, StatsSpec
 from riakjson.query import eq, between, and_args, or_args, regex, ASCENDING
 
 
@@ -15,7 +15,6 @@ else:
 
 
 class FindTests(unittest.TestCase):
-
 
     data = [{'_id': age, 'name': name, 'age': age} for age, name in enumerate(['Dan', 'Drew', 'Casey', 'Evan'])]
 
@@ -40,7 +39,7 @@ class FindTests(unittest.TestCase):
         self.keys = list()
 
     def test_no_match(self):
-        print "Test no match"
+        print "\nTest no match\n"
 
         q = Query(eq('name', 'notfound'))
 
@@ -54,7 +53,7 @@ class FindTests(unittest.TestCase):
             self.fail("Unexpected result, {0}, {1}".format(e, result))
 
     def test_find_one(self):
-        print "Test find one"
+        print "\nTest find one\n"
 
         q = Query(eq('name', 'Dan'))
 
@@ -69,7 +68,7 @@ class FindTests(unittest.TestCase):
             self.fail("Unexpected result, {0}, {1}".format(e, results))
 
     def test_find(self):
-        print "Test find (exact match)"
+        print "\nTest find (exact match)\n"
         q = Query(eq('name', 'Dan'))
 
         result = self.test_collection.find(q.build())
@@ -81,7 +80,7 @@ class FindTests(unittest.TestCase):
             self.fail("Unexpected result, {0}, {1}".format(e, result))
 
     def test_find_limit_0(self):
-        print "Test find (limit 0)"
+        print "\nTest find (limit 0)\n"
         q = Query(eq('name', 'Dan'))
         q.limit(0)
 
@@ -94,7 +93,7 @@ class FindTests(unittest.TestCase):
             self.fail("Unexpected result, {0}, {1}".format(e, result))
 
     def test_and(self):
-        print "Test and with 2 terms"
+        print "\nTest and with 2 terms\n"
         q = Query(and_args(eq('name', 'Drew'), eq('age', 1)))
 
         result = self.test_collection.find(q.build())
@@ -106,7 +105,7 @@ class FindTests(unittest.TestCase):
             self.fail("Unexpected result, {0}, {1}".format(e, result))
 
     def test_or(self):
-        print "Test or with 2 terms"
+        print "\nTest or with 2 terms\n"
         q = Query(or_args(eq('age', 1), eq('age', 2)))
 
         result = self.test_collection.find(q.build())
@@ -118,7 +117,7 @@ class FindTests(unittest.TestCase):
             self.fail("Unexpected result, {0}, {1}".format(e, result))
 
     def test_find_range(self):
-        print "Test find range"
+        print "\nTest find range\n"
 
         q = Query(between('age', 1, 2))
 
@@ -131,7 +130,7 @@ class FindTests(unittest.TestCase):
             self.fail("Unexpected result, {0}, {1}".format(e, result))
 
     def test_sort(self):
-        print "Test sorting"
+        print "\nTest sorting\n"
 
         q = Query(regex('name', '.*'))
         q.order({'name': ASCENDING})
@@ -148,7 +147,7 @@ class FindTests(unittest.TestCase):
             self.fail("Unexpected results, {0}, {1}".format(e, result))
 
     def test_paging(self):
-        print "Test paging"
+        print "\nTest paging\n"
 
         q = Query(regex('name', '.*'))
         q.order({'name': ASCENDING})
@@ -171,7 +170,7 @@ class FindTests(unittest.TestCase):
         self.assertEqual(expected, actual, "Result set not ordered, [{0}]".format(', '.join(actual)))
 
     def test_result_iter(self):
-        print "Test iteration on paged result set"
+        print "\nTest iteration on paged result set\n"
 
         q = Query(regex('name', '.*'))
         q.limit(1)
@@ -185,7 +184,7 @@ class FindTests(unittest.TestCase):
         self.assertEqual(count, expected_count, "Expected {0} iterations, got {1}".format(expected_count, count))
 
     def test_grouping_by_field(self):
-        print 'Test grouping by field'
+        print '\nTest grouping by field\n'
 
         q = Query(regex('name', '.*'))
         q.add_grouping(GroupSpec(field='name'))
@@ -195,12 +194,13 @@ class FindTests(unittest.TestCase):
         self.assertTrue(len(result.groups) > 0)
 
     def test_grouping_by_query(self):
-        print 'Test grouping by query'
+        print '\nTest grouping by query\n'
 
-        q = Query()
+        q = Query(regex('name', '.*'))
         group_spec = GroupSpec()
-        group_spec.add_group_query(or_args(eq('name', 'Dan'), eq('name', 'Drew')))
+        #group_spec.add_group_query(or_args(eq('name', 'Dan'), eq('name', 'Drew')))
         group_spec.add_group_query(eq('name', 'Evan'))
+        group_spec.sort = {'name': ASCENDING}
         group_spec.limit = 10
 
         q.add_grouping(group_spec)
@@ -209,49 +209,70 @@ class FindTests(unittest.TestCase):
 
         self.assertTrue(len(result.groups) > 0)
 
+    def test_categorize_by_field(self):
+        print '\nTest categorize by field\n'
 
+        q = Query(regex('name', '.*'))
 
-    #def test_stats(self):
-    #    print "Test stats generation"
-    #
-    #    q = query.Query(query.regex('name', '.*'))
-    #    q.stats_on('age')
-    #    q.limit(0)
-    #
-    #    expected_sum = sum([item['age'] for item in self.data])
-    #
-    #    result = self.test_collection.find(q.build())
-    #
-    #    self.assertTrue('age' in result.stats.fields)
-    #
-    #    self.assertEqual(result.stats.fields['age'].sum, expected_sum,
-    #                     "Expected sum {0} but got {1}".format(expected_sum, result.stats.fields['age'].sum))
-    #
-    #def test_stats_with_facet(self):
-    #    print "Test stats with facet generation"
-    #
-    #    q = query.Query(query.regex('name', '.*'))
-    #    q.stats_on('age')
-    #    q.stats_args({'facet': 'name'})
-    #    q.limit(0)
-    #
-    #    result = self.test_collection.find(q.build())
-    #
-    #    self.assertTrue('age' in result.stats.fields)
-    #    self.assertTrue('name' in result.stats.fields['age'].facets)
-    #
-    #
-    #def test_facets(self):
-    #    print "Test facets generation"
-    #
-    #    q = query.Query(query.regex('name', '.*'))
-    #    q.limit(0)
-    #    q.stats_on('age')
-    #    q.facet_on('age')
-    #
-    #    result = self.test_collection.find(q.build())
-    #
-    #    self.assertTrue(len(result.facets) > 0)
+        cat_spec = CategorizeSpec()
+        cat_spec.field = 'name'
+
+        q.add_categorization(cat_spec)
+        q.limit(0)
+
+        result = self.test_collection.find(q.build())
+
+        self.assertTrue(len(result.categories) > 0)
+
+    def test_categorize_by_range(self):
+        print '\nTest categorize by range'
+
+        q = Query(regex('name', '.*'))
+
+        range_spec = RangeSpec('age')
+        range_spec.start = 1
+        range_spec.end = 10
+        range_spec.increment = 1
+
+        cat_spec = CategorizeSpec()
+        cat_spec.range_spec = range_spec
+
+        q.add_categorization(cat_spec)
+
+        q.limit(0)
+
+        result = self.test_collection.find(q.build())
+
+        self.assertTrue(len(result.categories) > 0)
+
+    def test_categorize_by_query(self):
+        q = Query(regex('name', '.*'))
+
+        cat_spec = CategorizeSpec()
+        cat_spec.add_categorize_query(eq('name', 'Dan'))
+
+        q.add_categorization(cat_spec)
+
+        q.limit(0)
+
+        result = self.test_collection.find(q.build())
+
+        self.assertTrue(len(result.categories) > 0)
+
+    def test_categorize_with_stats(self):
+        print '\nTest categorize with stats\n'
+
+        q = Query(regex('name', '.*'))
+
+        cat_spec = CategorizeSpec()
+        cat_spec.stats = StatsSpec('name', 'age')
+
+        q.add_categorization(cat_spec)
+        q.limit(0)
+
+        result = self.test_collection.find(q.build())
+
+        self.assertTrue(len(result.categories) > 0)
 
     def test_find_geo(self):
         pass

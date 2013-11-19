@@ -30,7 +30,7 @@ class SchemaTests(unittest.TestCase):
         self.test_collection.delete_schema()
 
     def test_schema_not_found(self):
-        print "Test schema not found"
+        print "\nTest schema not found\n"
         self.not_found = self.client.not_found
 
         expected = [{}]
@@ -38,7 +38,7 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(expected, response, "Not found schema was found!")
 
     def test_create_schema(self):
-        print 'Test create schema'
+        print '\nTest create schema\n'
 
         response = self.test_collection.set_schema(self.default_schema, TEST_SCHEMA_NAME)
 
@@ -46,7 +46,7 @@ class SchemaTests(unittest.TestCase):
 
 
     def test_get_schema(self):
-        print 'Test get schema'
+        print '\nTest get schema\n'
 
         create_response = self.test_collection.set_schema(self.default_schema, TEST_SCHEMA_NAME)
         self.assertTrue(create_response, "Couldn't create schema for get_schema test")

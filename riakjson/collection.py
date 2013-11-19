@@ -8,6 +8,7 @@ YZ_RESOURCE = 'yz/'
 INTERNAL_INDEX_SUFFIX = 'RJIndex'
 DEFAULT_HEADERS = {'content-type': 'application/json', 'accept': 'application/json'}
 
+DEBUG = False
 
 class Collection(object):
 
@@ -87,7 +88,7 @@ class Collection(object):
     def find(self, query):
         resource = '{base}/{collection}/query/all'.format(base=COLLECTION_RESOURCE, collection=self.name)
 
-        code, headers, data = self.connection.put(resource, json.dumps(query), DEFAULT_HEADERS, debug=True)
+        code, headers, data = self.connection.put(resource, json.dumps(query), DEFAULT_HEADERS, debug=DEBUG)
 
         if code == 200:
             data_resp = json.loads(data)

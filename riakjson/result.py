@@ -12,6 +12,7 @@ class Result(object):
         self.num_pages = response_doc.get('num_pages', 0)
         self.raw_data = response_doc.get('data', list())
         self.groups = response_doc.get('groups', list())
+        self.categories = response_doc.get('categories', list())
         self.stats = Stats(response_doc.get('stats', dict()))
         self.facets = response_doc.get('facets', dict())
 
