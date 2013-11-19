@@ -12,16 +12,17 @@ class Result(object):
         self.num_pages = response_doc.get('num_pages', 0)
         self.raw_data = response_doc.get('data', list())
         self.groups = response_doc.get('groups', list())
-        self.categories = response_doc.get('categories', list())
+        self.categories = response_doc.get('categories', dict())
         self.stats = Stats(response_doc.get('stats', dict()))
         self.facets = response_doc.get('facets', dict())
+        self.response_doc = response_doc
 
     def objects(self, result_limit=None):
         _query = Query(query=self.query)
         try:
             result_count = 0
 
-            for page in xrange(1, self.num_pages + 1):
+            for page in xrange(0, self.num_pages + 1):
                 if page != 1:
                     _query.offset(page)
                     result = self.collection.find(_query.build())

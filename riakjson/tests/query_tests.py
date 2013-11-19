@@ -22,6 +22,12 @@ class FindTests(unittest.TestCase):
         self.client = Client()
         self.test_collection = self.client.test_collection
 
+        #q = Query(regex('name', '.*'))
+        #result = self.test_collection.find(q.build())
+        #for obj in result.objects():
+        #    del_result = self.test_collection.delete(obj['_id'])
+        #    print obj['_id'], del_result
+
         self.keys = list()
 
         for record in self.data:
@@ -158,7 +164,7 @@ class FindTests(unittest.TestCase):
 
         try:
             for i, record in enumerate(expected):
-                q.offset(i+1)
+                q.offset(i)
                 result = self.test_collection.find(q.build())
                 self.assertEqual(len(result.raw_data), 1, "Only expected 1 result {0}".format(result.raw_data))
 
@@ -189,7 +195,12 @@ class FindTests(unittest.TestCase):
         q = Query(regex('name', '.*'))
         q.add_grouping(GroupSpec(field='name'))
 
+        import json
+        print json.dumps(q.build())
+
         result = self.test_collection.find(q.build())
+
+        print result.groups
 
         self.assertTrue(len(result.groups) > 0)
 
@@ -229,10 +240,7 @@ class FindTests(unittest.TestCase):
 
         q = Query(regex('name', '.*'))
 
-        range_spec = RangeSpec('age')
-        range_spec.start = 1
-        range_spec.end = 10
-        range_spec.increment = 1
+        range_spec = RangeSpec('age', 1, 10, 1)
 
         cat_spec = CategorizeSpec()
         cat_spec.range_spec = range_spec

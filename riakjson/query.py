@@ -125,10 +125,9 @@ class Query(object):
         self._categorize_specs.append(categorize_spec)
 
 class GroupSpec(object):
-    def __init__(self, field=None, queries=list(), ranges=None, limit=0, start=1, sort=None):
+    def __init__(self, field=None, queries=list(), limit=0, start=1, sort=None):
         self.field = field
         self.queries = queries
-        self.ranges = ranges
         self.limit = limit
         self.start = start
         self.sort = sort
@@ -162,7 +161,7 @@ class RangeSpec(object):
     def build(self):
         result = OrderedDict()
         result['field'] = self.field
-        if self.start:
+        if self.start != None:  # Range can be 0, which evaluates to false
             result['start'] = self.start
         if self.end:
             result['end'] = self.end
