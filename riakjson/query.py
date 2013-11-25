@@ -125,7 +125,7 @@ class Query(object):
         self._categorize_specs.append(categorize_spec)
 
 class GroupSpec(object):
-    def __init__(self, field=None, queries=list(), limit=0, start=1, sort=None):
+    def __init__(self, field=None, queries=list(), limit=0, start=0, sort=None):
         self.field = field
         self.queries = queries
         self.limit = limit

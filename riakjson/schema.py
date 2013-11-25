@@ -14,6 +14,9 @@ class Schema(object):
         self._add_field(field_name, 'number')
         return self
 
+    def integer(self, field_name):
+        self._add_field(field_name, 'integer')
+
     def text(self, field_name):
         self._add_field(field_name, 'text')
         return self

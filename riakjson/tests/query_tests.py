@@ -195,30 +195,25 @@ class FindTests(unittest.TestCase):
         q = Query(regex('name', '.*'))
         q.add_grouping(GroupSpec(field='name'))
 
-        import json
-        print json.dumps(q.build())
-
-        result = self.test_collection.find(q.build())
-
-        print result.groups
-
-        self.assertTrue(len(result.groups) > 0)
-
-    def test_grouping_by_query(self):
-        print '\nTest grouping by query\n'
-
-        q = Query(regex('name', '.*'))
-        group_spec = GroupSpec()
-        #group_spec.add_group_query(or_args(eq('name', 'Dan'), eq('name', 'Drew')))
-        group_spec.add_group_query(eq('name', 'Evan'))
-        group_spec.sort = {'name': ASCENDING}
-        group_spec.limit = 10
-
-        q.add_grouping(group_spec)
-
         result = self.test_collection.find(q.build())
 
         self.assertTrue(len(result.groups) > 0)
+
+    #def test_grouping_by_query(self):
+    #    print '\nTest grouping by query\n'
+    #
+    #    q = Query(regex('name', '.*'))
+    #    group_spec = GroupSpec()
+    #    #group_spec.add_group_query(or_args(eq('name', 'Dan'), eq('name', 'Drew')))
+    #    group_spec.add_group_query(eq('name', 'Evan'))
+    #    group_spec.sort = {'name': ASCENDING}
+    #    group_spec.limit = 10
+    #
+    #    q.add_grouping(group_spec)
+    #
+    #    result = self.test_collection.find(q.build())
+    #
+    #    self.assertTrue(len(result.groups) > 0)
 
     def test_categorize_by_field(self):
         print '\nTest categorize by field\n'

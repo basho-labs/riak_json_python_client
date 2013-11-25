@@ -104,10 +104,9 @@ class Collection(object):
                                                                                                code,
                                                                                                data))
 
-    def set_schema(self, schema_doc, schema_name):
-        resource = '{base}/{collection}/schema/{schema_name}'.format(base=COLLECTION_RESOURCE,
-                                                                     collection=self.name,
-                                                                     schema_name=schema_name)
+    def set_schema(self, schema_doc):
+        resource = '{base}/{collection}/schema'.format(base=COLLECTION_RESOURCE,
+                                                       collection=self.name)
 
         code, headers, data = self.connection.put(resource, json.dumps(schema_doc), DEFAULT_HEADERS)
 
@@ -119,10 +118,9 @@ class Collection(object):
                                                                                        code,
                                                                                        data))
 
-    def get_schema(self, schema_name):
-        resource = '{base}/{collection}/schema/{schema_name}'.format(base=COLLECTION_RESOURCE,
-                                                                     collection=self.name,
-                                                                     schema_name=schema_name)
+    def get_schema(self):
+        resource = '{base}/{collection}/schema'.format(base=COLLECTION_RESOURCE,
+                                                       collection=self.name)
 
         code, headers, data = self.connection.get(resource, DEFAULT_HEADERS)
 

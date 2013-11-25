@@ -1,39 +1,58 @@
 __author__ = 'dankerrigan'
 
 import json
+import time
+from collections import OrderedDict
 
 from riakjson.client import Client
+from riakjson.schema import Schema
 from riakjson.query import eq, and_args, or_args, regex, gte, lte
 from riakjson.query import Query, GroupSpec, CategorizeSpec, RangeSpec, StatsSpec
 
 HOST = '127.0.0.1'
 PORT = 8098
 
-VARS = [('Harold', 33, 'M', 'WV'),
-        ('Petunia', 31, 'F', 'VA'),
-        ('Max', 2, 'M', 'MD'),
-        ('Carrie', 28, 'F', 'WV'),
-        ('Wilt', 28, 'M', 'WV'),
-        ('Roberta', 2, 'F', 'WA'),
-        ('Rowena', 2, 'f', 'WA'),
-        ('Robert', 40, 'M', 'MI')]
+VARS = [('Harold', 33),
+        ('Petunia', 31),
+        ('Max', 2),
+        ('Carrie', 28),
+        ('Wilt', 28),
+        ('Roberta', 2),
+        ('Rowena', 2),
+        ('Robert', 40),
+        ('Casey', 9000),
+        ('Drew', 1),
+        ('Dan', 2),
+        ('Felix', 3)]
 
 DATA = []
 for data in VARS:
-    DATA.append(dict(zip(['name', 'age', 'gender', 'state'], data)))
+    DATA.append(OrderedDict(zip(['name', 'metric'], data)))
 
 RJ_SUFFIX = 'RJIndex'
 TEST_COLLECTION = 'demo_collection'
 
-def curl(verb, resource, data=None, base='document', collection=TEST_COLLECTION):
+curl_cmds = []
+
+def curl(verb, resource, data=None, base='document', collection=TEST_COLLECTION, accept_header=False):
     uri = "http://{host}:{port}/{base}/{collection}/{resource}".format(host=HOST,
                                                                        port=PORT,
                                                                        base=base + '/collection',
                                                                        collection=collection,
                                                                        resource=resource)
-    cmd = 'curl -v -H"content-type: application/json" -H"accept: application/json" -X{verb} {url}'.format(verb=verb, url=uri)
+    cmd_fmt = 'curl -v '
+    if verb == 'PUT' or verb == 'POST':
+        cmd_fmt += '-H"content-type: application/json" '
+    if accept_header:
+        cmd_fmt += '-H"accept: application/json" '
+    cmd_fmt += '-X{verb} {url}'
+    cmd = cmd_fmt.format(verb=verb, url=uri)
     if data:
-        cmd += ' -d {data}'.format(data=json.dumps(data).replace('"', '\"'))
+        cmd += ' -d {data}'.format(data=json.dumps(data).replace('"', '\"').replace('$', '\\$'))
+    if accept_header:
+        cmd += ' | python -m json.tool'
+
+    curl_cmds.append(cmd)
 
     return cmd
 
@@ -56,6 +75,29 @@ def _delete_all_records():
         del_result = demo_collection.delete(obj['_id'])
         print obj['_id'], del_result
 
+def set_schema():
+    print '\nSetting a schema:\n'
+
+    schema = Schema()
+    schema.string('name')
+    schema.integer('metric')
+
+    json_pprint(schema.build())
+
+    demo_collection.set_schema(schema.build())
+
+    print '\n' + curl('PUT', 'schema', data=json.dumps(schema.build())) + '\n'
+
+
+def retrieve_schema():
+    print '\nGetting a schema:'
+
+    print '\n' + curl('GET', 'schema') + '\n'
+
+    result = demo_collection.get_schema()
+
+    json_pprint(result)
+
 def insert_records(data):
     for record in data:
         insert_record(record)
@@ -73,14 +115,14 @@ def insert_record(record):
 def retrieve_record(record):
     print '\nRetrieve a Record for key, {key}:'.format(key=record['name'])
 
-    print '\n' + curl('GET', record['name']) + '\n'
+    print '\n' + curl('GET', record['name'], accept_header=True) + '\n'
 
     response = json.loads(demo_collection.get(record['name']))
 
     json_pprint(response)
 
 def delete_record(record):
-    print 'Delete a Record for key, {key}'.format(key=record['name'])
+    print '\nDelete a Record for key, {key}'.format(key=record['name'])
 
     print '\n' + curl('DELETE', record['name'])
 
@@ -92,7 +134,7 @@ def equality_query(field, value):
 
     query_pprint(q.build())
 
-    print '\n' + curl('PUT', 'query/all', data=query)
+    print '\n' + curl('PUT', 'query/all', data=query, accept_header=True)
 
     result = demo_collection.find(q.build())
 
@@ -107,7 +149,7 @@ def find_one_equality(field, value):
 
     query_pprint(q.build())
 
-    print '\n' + curl('PUT', 'query/one', data=query)
+    print '\n' + curl('PUT', 'query/one', data=query, accept_header=True)
 
     result = demo_collection.find_one(q.build())
 
@@ -123,7 +165,7 @@ def find_regex(field, value):
 
     query_pprint(q.build())
 
-    print '\n' + curl('PUT', 'query/all', data=query)
+    print '\n' + curl('PUT', 'query/all', data=query, accept_header=True)
 
     result = demo_collection.find(q.build())
 
@@ -138,7 +180,7 @@ def find_and(field, value, low_field, low_value, high_field, high_value):
 
     query_pprint(q.build())
 
-    print '\n' + curl('PUT', 'query/all', data=query)
+    print '\n' + curl('PUT', 'query/all', data=query, accept_header=True)
 
     result = demo_collection.find(q.build())
 
@@ -153,20 +195,40 @@ def find_or(field, value1, value2, value3):
 
     query_pprint(q.build())
 
-    print '\n' + curl('PUT', 'query/all', data=query)
+    print '\n' + curl('PUT', 'query/all', data=query, accept_header=True)
 
     result = demo_collection.find(q.build())
 
     json_pprint(result.response_doc)
 
-def group_by_field(field):
+def group_by_field(query_field, field):
     print '\nGroup by value for field, {field}'.format(field=field)
+
+    q = Query(regex(query_field, '.*'))
+
+    group = GroupSpec(field=field, limit=10, sort={'metric': 'asc'})
+
+    q.add_grouping(group)
+
+    query_pprint(q.build())
+
+    query = json.dumps(q.build())
+
+    print '\n' + curl('PUT', 'query/all', data=query, accept_header=True)
+
+    result = demo_collection.find(q.build())
+
+    json_pprint(result.response_doc)
+
+def group_by_queries(field, regex1, regex2):
+    print '\nGroup by query for field, {field}'.format(field=field)
 
     q = Query(regex(field, '.*'))
 
-    group = GroupSpec()
-    group.field = field
-    group.limit = 10
+    group = GroupSpec(sort={'metric': 'asc'})
+
+    group.add_group_query(regex(field, regex1))
+    group.add_group_query(regex(field, regex2))
 
     q.add_grouping(group)
 
@@ -180,58 +242,36 @@ def group_by_field(field):
 
     json_pprint(result.response_doc)
 
-#def group_by_queries(field, regex1, regex2):
-#    print '\nGroup by query for field, {field}'.format(field=field)
-#
-#    q = Query(regex(field, '.*'))
-#
-#    group = GroupSpec()
-#
-#    group.add_group_query(regex(field, regex1))
-#    group.add_group_query(regex(field, regex2))
-#
-#    q.add_grouping(group)
-#
-#    query_pprint(q.build())
-#
-#    query = json.dumps(q.build())
-#
-#    print '\n' + curl('PUT', 'query/all', data=query)
-#
-#    result = demo_collection.find(q.build())
-#
-#    json_pprint(result.response_doc)
-
-
-def categorize_by_field(field):
+def categorize_by_field(query_field, field):
     print '\nCategorize by value for field, {field}'.format(field=field)
 
-    q = Query(regex(field, '.*'))
+    q = Query(regex(query_field, '.*'))
     q.limit(0)
 
     category = CategorizeSpec()
     category.field = field
+
     q.add_categorization(category)
 
     query = json.dumps(q.build())
 
     query_pprint(q.build())
 
-    print '\n' + curl('PUT', 'query/all', data=query)
+    print '\n' + curl('PUT', 'query/all', data=query, accept_header=True)
 
     result = demo_collection.find(q.build())
 
     json_pprint(result.response_doc)
 
-def categorize_by_range(field, start, end, increment):
+def categorize_by_range(query_field, field, start, end, increment):
     print '\nCategorize by range for field, {field}'.format(field=field)
 
-    q = Query(regex(field, '.*'))
+    q = Query(regex(query_field, '.*'))
     q.limit(0)
 
     category = CategorizeSpec()
 
-    _range = RangeSpec('age', start, end, increment)
+    _range = RangeSpec(field, start, end, increment)
     category.range_spec = _range
 
     q.add_categorization(category)
@@ -240,26 +280,60 @@ def categorize_by_range(field, start, end, increment):
 
     query_pprint(q.build())
 
-    print '\n' + curl('PUT', 'query/all', data=query)
+    print '\n' + curl('PUT', 'query/all', data=query, accept_header=True)
+
+    result = demo_collection.find(q.build())
+
+    json_pprint(result.response_doc)
+
+def categorize_by_query(field, regex1, regex2):
+    print '\nCategorize by range for field, {field}'.format(field=field)
+
+    q = Query(regex(field, '.*'))
+    q.limit(0)
+
+    category = CategorizeSpec()
+
+    category.add_categorize_query(regex(field, regex1))
+    category.add_categorize_query(regex(field, regex2))
+
+    q.add_categorization(category)
+
+    query = json.dumps(q.build())
+
+    query_pprint(q.build())
+
+    print '\n' + curl('PUT', 'query/all', data=query, accept_header=True)
+
+    result = demo_collection.find(q.build())
+
+    json_pprint(result.response_doc)
+
+def categorize_with_stats(field, stat_field):
+    print '\nCategorize with stats on field, {stat_field}'.format(stat_field=stat_field)
+
+    q = Query(regex(field, '.*'))
+    q.limit(0)
+
+    category = CategorizeSpec()
+    category.stats = StatsSpec(field, stat_field)
+
+    q.add_categorization(category)
+
+    query = json.dumps(q.build())
+
+    query_pprint(q.build())
+
+    print '\n' + curl('PUT', 'query/all', data=query, accept_header=True)
 
     result = demo_collection.find(q.build())
 
     json_pprint(result.response_doc)
 
 
-def retrieve_inferred_schema():
-    print '\nRetrieve inferred schema:'
-
-    schema = '{collection}'.format(collection=TEST_COLLECTION)
-    resource = 'schema/' + schema
-    print '\n' + curl('GET', resource)
-
-    response = demo_collection.get_schema(schema)
-    json_pprint(response)
-
 if __name__ == '__main__':
-
-    #_delete_all_records()
+    set_schema()
+    retrieve_schema()
 
     insert_record(DATA[0])
     retrieve_record(DATA[0])
@@ -267,16 +341,20 @@ if __name__ == '__main__':
 
     insert_records(DATA)
 
+    time.sleep(1) # a sleep to ensure everything's in place
+
+    find_regex('name', 'R.*')
     equality_query('name', 'Harold')
     find_one_equality('name', 'Harold')
-    find_regex('name', 'R.*')
-    find_and('name', 'R.*', 'age', 5, 'age', 100)
-    find_or('state', 'WV', 'MD', 'VA')
-    group_by_field('state')
+    find_and('name', 'R.*', 'metric', 5, 'metric', 100)
+    find_or('metric', 2, 28, 40)
+    group_by_field('name', 'metric')
     #group_by_queries('name', 'R.*', '.*a')
-    categorize_by_field('state')
-    categorize_by_range('age', 1, 50, 10)
+    categorize_by_field('name', 'metric')
+    categorize_by_range('name', 'metric', 1, 50, 10)
+    categorize_by_query('name', 'R.*', '.*a')
 
+    categorize_with_stats('name', 'metric')
 
-
-    #retrieve_inferred_schema()
+    #for curl_cmd in curl_cmds:
+    #    print curl_cmd
