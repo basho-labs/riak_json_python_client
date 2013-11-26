@@ -113,6 +113,8 @@
 
     result = customers.find(query.build())
 
+### See riakjson/examples/demo.py for more usage examples
+
 
 
 
