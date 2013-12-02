@@ -14,6 +14,12 @@
 
 ## Usage
 
+### Unit Testing
+Note: The unit tests assume that Riak is listening on the default HTTP port of 8098.
+```
+python -m unittest riakjson.tests.query_tests
+```
+
 ### Create a connection
 
     from riakjson.client import Client
