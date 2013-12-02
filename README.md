@@ -3,7 +3,7 @@
 ## Requiremnts
 
 + Python 2.7
-+ requests
++ [requests](http://www.python-requests.org/en/latest/user/install/)
 
 ## Installation
 
