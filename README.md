@@ -1,9 +1,10 @@
 # Riak JSON Python Client
 
-## Requiremnts
+## Requirements
 
 + Python 2.7
 + [requests](http://www.python-requests.org/en/latest/user/install/)
++ Riak with [riak_json](https://github.com/basho-labs/riak_json), installed, enabled in ```riak.conf```, and running
 
 ## Installation
 
