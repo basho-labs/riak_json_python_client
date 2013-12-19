@@ -46,7 +46,7 @@ class SchemaTests(unittest.TestCase):
         self.client = Client()
         self.test_collection = self.client[TEST_COLLECTION]
 
-    def tearDown(self):
+    def clean_up_schema(self):
         self.test_collection.delete_schema()
 
     def test_schema_not_found(self):
@@ -54,26 +54,27 @@ class SchemaTests(unittest.TestCase):
         self.not_found = self.client.not_found
 
         expected = [{}]
-        response = self.not_found.get_schema('not_found')
+        response = self.not_found.get_schema()
         self.assertEqual(expected, response, "Not found schema was found!")
 
     def test_create_schema(self):
         print '\nTest create schema\n'
 
-        response = self.test_collection.set_schema(self.default_schema, TEST_SCHEMA_NAME)
+        response = self.test_collection.set_schema(self.default_schema)
 
         self.assertTrue(response, "Could not set schema!")
 
+        self.clean_up_schema()
 
     def test_get_schema(self):
         print '\nTest get schema\n'
 
-        create_response = self.test_collection.set_schema(self.default_schema, TEST_SCHEMA_NAME)
+        create_response = self.test_collection.set_schema(self.default_schema)
         self.assertTrue(create_response, "Couldn't create schema for get_schema test")
-        response = self.test_collection.get_schema(TEST_SCHEMA_NAME)
+        response = self.test_collection.get_schema()
 
         self.assertEqual(self.default_schema, response,
                          "Retrieved schema was not identical to set schema, {0}".format(response))
 
-
+        self.clean_up_schema()
 

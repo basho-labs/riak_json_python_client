@@ -154,11 +154,10 @@ class Collection(object):
                                                                                                    data))
 
     def delete_schema(self):
-        resource = '{yz_base}index/{collection}{internal_suffix}'.format(yz_base=YZ_RESOURCE,
-                                                                         collection=self.name,
-                                                                         internal_suffix=INTERNAL_INDEX_SUFFIX)
+        resource = '{base}/{collection}/schema'.format(base=COLLECTION_RESOURCE,
+                                                       collection=self.name)
 
-        code, headers, data = self.connection.delete(resource, root='')
+        code, headers, data = self.connection.delete(resource)
 
         if code == 204:
             return True
