@@ -18,7 +18,7 @@
 ##
 ## -------------------------------------------------------------------
 
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(
     name='riak_json_python_client',
@@ -28,5 +28,6 @@ setup(
     license='',
     author='dankerrigan',
     author_email='',
-    description=''
+    description='',
+    test_suite='riakjson.tests'
 )
