@@ -61,6 +61,12 @@ class BasicClientTests(unittest.TestCase):
         self.assertEquals(nonrandom_key, 'key')
         self.key_data[nonrandom_key] = data
 
+    def test_not_found(self):
+
+        data = self.test_collection.get('not_found')
+
+        self.assertFalse(data)
+
     def test_insert_no_key(self):
         data = {'name': 'Keyless Dan'}
         random_key = self.test_collection.insert(data)
