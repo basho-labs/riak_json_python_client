@@ -42,12 +42,6 @@ class FindTests(unittest.TestCase):
         self.client = Client()
         self.test_collection = self.client.test_collection
 
-        #q = Query(regex('name', '.*'))
-        #result = self.test_collection.find(q.build())
-        #for obj in result.objects():
-        #    del_result = self.test_collection.delete(obj['_id'])
-        #    print obj['_id'], del_result
-
         self.keys = list()
 
         for record in self.data:
@@ -63,6 +57,8 @@ class FindTests(unittest.TestCase):
             self.test_collection.delete(key)
 
         self.keys = list()
+
+        self.test_collection.delete_schema()
 
     def test_no_match(self):
         print "\nTest no match\n"

@@ -21,6 +21,8 @@
 __author__ = 'dankerrigan'
 
 import platform
+import time
+import json
 
 from riakjson.client import Client
 
@@ -33,31 +35,60 @@ TEST_COLLECTION = 'test_collection'
 
 
 class BasicClientTests(unittest.TestCase):
-    key_data = list()
+    key_data = dict()
 
     def setUp(self):
         self.client = Client()
         self.test_collection = self.client[TEST_COLLECTION]
+        self.schema_created = False
+
+    def tearDown(self):
+        keys = list(self.key_data.keys())
+        for key in keys:
+            self.test_collection.delete(key)
+            self.key_data.pop(key)
+
+        if self.schema_created:
+            self.test_collection.delete_schema()
+
 
     def test_insert(self):
         data = {'name': 'Keymore Dan'}
         nonrandom_key = self.test_collection.insert(data, 'key')
+
+        self.schema_created = True
+
         self.assertEquals(nonrandom_key, 'key')
-        self.key_data.append((nonrandom_key, data))
+        self.key_data[nonrandom_key] = data
 
     def test_insert_no_key(self):
         data = {'name': 'Keyless Dan'}
         random_key = self.test_collection.insert(data)
+
+        self.schema_created = True
+
         self.assertIsNotNone(random_key)
-        self.key_data.append((random_key, data))
+        self.key_data[random_key] = data
 
     def test_get(self):
-        for key, data in self.key_data:
-            doc = self.test_collection.get(key)
+        data = {'somedata': 'Keyless Data'}
+        self.key_data[self.test_collection.insert(data)] = data
+
+        self.schema_created = True
+
+        for key, data in self.key_data.items():
+            doc = json.loads(self.test_collection.get(key))
             self.assertEqual(data, doc)
 
     def test_delete(self):
-        for key, data in self.key_data:
-            self.assertTrue(self.test_collection.delete(key))
+        data = {'name': 'Delete Me'}
+        key = self.test_collection.insert(data, 'delete')
 
-        self.key_data = list()
+        self.schema_created = True
+
+        self.assertTrue(self.test_collection.delete(key))
+
+        time.sleep(1)
+
+        self.assertFalse(self.test_collection.get('delete'))
+
