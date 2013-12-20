@@ -1,9 +1,10 @@
 # Riak JSON Python Client
 
-## Requiremnts
+## Requirements
 
 + Python 2.7
 + [requests](http://www.python-requests.org/en/latest/user/install/)
++ Riak with [riak_json](https://github.com/basho-labs/riak_json), installed, enabled in ```riak.conf```, and running
 
 ## Installation
 
@@ -12,6 +13,12 @@
     python setup.py install
 
 ## Usage
+
+### Unit Testing
+Note: The unit tests assume that Riak is listening on the default HTTP port of 8098.
+```
+python -m unittest riakjson.tests.query_tests
+```
 
 ### Create a connection
 
