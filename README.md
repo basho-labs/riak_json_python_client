@@ -5,6 +5,7 @@
 + Python 2.7
 + [requests](http://www.python-requests.org/en/latest/user/install/)
 + Riak with [riak_json](https://github.com/basho-labs/riak_json), installed, enabled in ```riak.conf```, and running
++ Riak Search enabled in ```riak.conf```
 
 ## Installation
 ```bash
@@ -17,9 +18,9 @@
 
 ### Create a connection
 ```python
-    from riakjson.client import Client
+    from riakjson.client import Client, Connection
 
-    client = Client(Connection(host='127.0.0.1', port=8000))
+    client = Client(Connection(host='127.0.0.1', port=8098))
 ```
 
 ### Create or Use an existing collection
